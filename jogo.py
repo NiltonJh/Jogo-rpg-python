@@ -20,16 +20,10 @@ player = {
 # Definição de itens
 itens = {
     "armas": [
-        {"nome": "Espada de Ferro", "dano": 5},
-        {"nome": "Machado de Guerra", "dano": 10},
-        {"nome": "Lança Longa", "dano": 7},
         {"nome": "Espada de Ouro", "dano": 15},
         {"nome": "Machado de Diamante", "dano": 20}
     ],
     "armaduras": [
-        {"nome": "Armadura de Couro", "hp": 20},
-        {"nome": "Armadura de Ferro", "hp": 40},
-        {"nome": "Armadura de Aço", "hp": 60},
         {"nome": "Armadura de Ouro", "hp": 80},
         {"nome": "Armadura de Diamante", "hp": 100}
     ],
@@ -39,29 +33,37 @@ itens = {
 }
 
 # Função para criar um NPC
-def criar_npc(level, tipo):
+def criar_npc(tipo):
     if tipo == "Goblin":
-        dano_base = random.randint(1, 5)
-        hp_base = random.randint(10, 30)
+        dano_base = 5
+        hp_base = 10
+    elif tipo == "Troll":
+        dano_base = 10
+        hp_base = 25
+    elif tipo == "Dragão":
+        dano_base = 25
+        hp_base = 50
+    elif tipo == "Demônio":
+        dano_base = 35
+        hp_base = 150
     else:
-        dano_base = random.randint(5, 15)
-        hp_base = random.randint(20, 50)
+        dano_base = 10
+        hp_base = 40
     
     return {
-        "nome": f"{tipo} #{level}" if level < 100 else "Rei do Inferno",
-        "level": level,
-        "dano": dano_base + level,
-        "hp": hp_base + level * 2,
-        "hp_max": hp_base + level * 2,
-        "exp": level * 10,
+        "nome": tipo,
+        "level": 1,
+        "dano": dano_base,
+        "hp": hp_base,
+        "hp_max": hp_base,
+        "exp": hp_base // 2,
         "drop": random.choice(itens["armas"] + itens["armaduras"] + itens["poções"])
     }
 
 # Função para gerar NPCs
-def gerar_npcs(n_npcs, tipo, level_range):
-    for x in range(n_npcs):
-        level = random.randint(level_range[0], level_range[1])
-        npc = criar_npc(level, tipo)
+def gerar_npcs(n_npcs, tipo):
+    for _ in range(n_npcs):
+        npc = criar_npc(tipo)
         lista_npcs.append(npc)
 
 # Função para exibir NPCs
@@ -165,6 +167,32 @@ def reiniciar_jogo():
     player["armadura"] = None
     lista_npcs.clear()
 
+# Função para realizar o combate
+def realizar_combate():
+    caminho = escolher_caminho()
+    print(f"Você escolheu o caminho: {caminho}")
+    if caminho == "Floresta":
+        gerar_npcs(10, "Goblin")
+    elif caminho == "Caverna":
+        gerar_npcs(10, "Troll")
+    elif caminho == "Montanha":
+        gerar_npcs(10, "Dragão")
+    elif caminho == "Hell":
+        gerar_npcs(10, "Demônio")
+    npc = random.choice(lista_npcs)
+    print("Você encontrou um inimigo!")
+    exibir_npc(npc)
+    while npc["hp"] > 0 and player["hp"] > 0:
+        atacar_npc(npc)
+        if npc["hp"] > 0:
+            player["hp"] -= npc["dano"]
+            print(f"{npc['nome']} atacou você! Você tem {player['hp']} HP restante.")
+        if player["hp"] <= 0:
+            print("Você morreu! Game Over.")
+            reiniciar_jogo()
+            break
+    reset_player()
+
 # Função principal do jogo
 def main():
     player["nome"] = input("Digite o nome do seu personagem: ")
@@ -176,35 +204,16 @@ def main():
         print("4. Exibir inventário")
         escolha = int(input("Digite a sua escolha: "))
         if escolha == 1:
-            caminho = escolher_caminho()
-            print(f"Você escolheu o caminho: {caminho}")
-            if caminho == "Floresta":
-                gerar_npcs(10, "Goblin", (1, 20))
-            elif caminho == "Caverna":
-                gerar_npcs(10, "Troll", (21, 50))
-            elif caminho == "Montanha":
-                gerar_npcs(10, "Dragão", (51, 80))
-            elif caminho == "Hell":
-                gerar_npcs(10, "Demônio", (81, 100))
-            npc = random.choice(lista_npcs)
-            print("Você encontrou um inimigo!")
-            exibir_npc(npc)
-            while npc["hp"] > 0 and player["hp"] > 0:
-                atacar_npc(npc)
-                if npc["hp"] > 0:
-                    player["hp"] -= npc["dano"]
-                    print(f"{npc['nome']} atacou você! Você tem {player['hp']} HP restante.")
-                if player["hp"] <= 0:
-                    print("Você morreu! Game Over.")
-                    reiniciar_jogo()
-                    break
-            reset_player()
+            realizar_combate()
         elif escolha == 2:
             tomar_banho()
+
         elif escolha == 3:
             usar_pocao()
+            print("Você usou uma Poção de Cura e recuperou 50 HP!")
         elif escolha == 4:
             exibir_inventario()
+            print("Inventário:")
         else:
             print("Escolha inválida!")
 
